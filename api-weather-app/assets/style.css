@@ -1,0 +1,15 @@
+/* Google Font */
+* {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+    font-family: 'Comic Neue', cursive;
+}
+
+body {
+	background-color: #ddd;
+}
+
+#weatherIcon img {
+  width: 100px;
+  height: auto;
+}

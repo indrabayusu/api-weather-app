@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+            font-family: 'Comic Neue', cursive;
+        }
+
+        body {
+            background-color: rgb(203 213 225);
+            transition: background-image 1s ease-in-out;
+        }
+
+        #weatherIcon img {
+            width: 100px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .weather-info {
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #getWeatherBtn:hover {
+            background-color: #3182ce;
+        }
+
+        #error-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 12px 16px 12px 16px;
+            background-color: rgb(254, 226, 226);
+            color: rgb(185 2,8, 28);
+            border: 1px solid rgb(248, 113, 113);
+            border-radius: 6px;
+            text-align: center;
+            display: none;
+        }
+		.forecast-item {
+		    background-color: rgb(241 245 249); 
+		    padding: 1rem;
+		    border-radius: 0.5rem;
+		    text-align: center;
+		    margin: 0.5rem; 
+		    display: flex;
+		    flex-direction: column;
+		    justify-content: center;
+		    align-items: center;
+		}
+
+		.forecast-item img {
+		    width: 50px; 
+		    height: 50px; 
+		    margin-bottom: 0.5rem; 
+		}
+		#weather-info {
+		    background-color: rgb(241 245 249); 
+		}
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mx-auto">
+    <div class="mt-8">
+        <h1 class="text-4xl font-bold text-center mb-4">Weather App</h1>
+		<div class="flex justify-center items-center">
+			<input type="text" id="city" class="w-64 px-2 py-2 border rounded-l-lg" placeholder="Enter city name...">
+			<button id="getWeatherBtn" class="px-6 py-2 bg-blue-500 text-white rounded-r-lg">Get Weather</button>
+		</div>
+        <!-- Notifikasi Error -->
+        <div id="error-notification">
+            <p id="error-message"></p>
+        </div>
+        <div id="weather-info" class="mt-8 text-center bg-slate-100 rounded-md max-w-sm mx-auto px-4 shadow-lg">
+            <h2 id="cityName" class="text-2xl weather-info"></h2>
+            <div id="weatherIcon" class="mt-2 mx-auto flex justify-center weather-info"></div>
+            <h2 id="temp" class="text-2xl weather-info"></h2>
+            <h4 id="description" class="weather-info"></h4>
+            <h4 id="feelsLike" class="weather-info"></h4>
+            <h4 id="humidity" class="weather-info"></h4>
+        </div>
+        <!-- Prakiraan Cuaca -->
+        <div id="forecast" class="mt-8 text-center">
+            <h3 class="text-xl font-semibold pb-2">Weather Forecast</h3>
+			<div class="flex flex-wrap justify-center mb-6" id="forecast-items">
+				<!-- Prakiraan cuaca akan ditambahkan secara dinamis di sini -->
+			</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        // Fungsi untuk menampilkan pesan kesalahan
+        function showError(message) {
+            $('#error-message').text(message);
+            $('#error-notification').fadeIn().delay(5000).fadeOut();
+        }
+
+        $('#getWeatherBtn').click(function() {
+            var city = $('#city').val();
+            if(city != '') {
+                $.ajax({
+                    url: 'https://api.openweathermap.org/data/2.5/weather?q=' + city + '&units=metric' + '&APPID=YOUR_API_KEY',
+                    type: 'GET',
+                    dataType: 'jsonp',
+                    success: function(data) {
+                        var weather = '';
+                        var icon = data.weather[0].icon;
+                        var description = data.weather[0].description;
+                        var temp = data.main.temp;
+                        var feelsLike = data.main.feels_like;
+                        var humidity = data.main.humidity;
+                        var cityName = data.name;
+                        var country = data.sys.country;
+                        var iconUrl = 'https://openweathermap.org/img/w/' + icon + '.png';
+
+                        $('#weatherIcon').html('<img src="' + iconUrl + '">');
+                        $('#temp').html('Temperature: ' + temp + ' &deg;C');
+                        $('#description').html('Weather: ' + description);
+                        $('#feelsLike').html('Feels like: ' + feelsLike + ' &deg;C');
+                        $('#humidity').html('Humidity: ' + humidity + '%').addClass('pb-4');
+                        $('#cityName').html(cityName + ', ' + country).addClass('pt-4');
+
+                        updateBackground(description);
+
+                        $('#error-message').text('');
+
+                        $('.weather-info').addClass('fadeIn');
+
+                        getWeatherForecast(city);
+                    },
+                    error: function() {
+                        showError('City not found. Please enter a valid city name.');
+                    }
+                });
+            } else {
+                showError('Please enter a city name');
+            }
+        });
+
+        function getWeatherForecast(city) {
+            $.ajax({
+                url: 'https://api.openweathermap.org/data/2.5/forecast?q=' + city + '&units=metric' + '&APPID=de94ad80585ec8fdf582530b4ae9d5e7',
+                type: 'GET',
+                dataType: 'jsonp',
+                success: function(data) {
+                    var forecastItems = '';
+                    var currentDate = new Date(); 
+                    var currentDateStr = currentDate.toDateString(); 
+                    var uniqueDates = {};
+
+                    for (var i = 0; i < data.list.length; i++) {
+                        var forecast = data.list[i];
+                        var date = new Date(forecast.dt * 1000);
+
+                        var forecastDateStr = date.toDateString();
+
+                        if (forecastDateStr !== currentDateStr && !uniqueDates[forecastDateStr]) {
+                            var day = date.toLocaleDateString('en-US', { weekday: 'long' });
+                            var icon = forecast.weather[0].icon;
+                            var weatherDescription = forecast.weather[0].description;
+                            var maxTemp = forecast.main.temp_max;
+                            var minTemp = forecast.main.temp_min;
+
+                            forecastItems += '<div class="forecast-item bg-slate-100 p-4 rounded-md m-2 text-center shadow-lg">';
+                            forecastItems += '<p>' + day + '</p>';
+                            forecastItems += '<div class="mx-auto">';
+                            forecastItems += '<img src="https://openweathermap.org/img/w/' + icon + '.png" alt="' + weatherDescription + '">';
+                            forecastItems += '</div>';
+                            forecastItems += '<p>' + maxTemp + '&deg;C</p>';
+                            forecastItems += '<p>' + weatherDescription + '</p>';
+                            forecastItems += '</div>';
+
+                            uniqueDates[forecastDateStr] = true;
+                        }
+                    }
+
+                    $('#forecast-items').html(forecastItems);
+                },
+                error: function() {
+                    showError('Failed to fetch weather forecast.');
+                }
+            });
+        }
+
+        function updateBackground(description) {
+            var backgroundImage = '';
+
+            if (description.includes('clear')) {
+                backgroundImage = 'url(sunny.jpg)';
+            } else if (description.includes('rain')) {
+                backgroundImage = 'url(rainy.jpg)';
+            } else if (description.includes('cloud')) {
+                backgroundImage = 'url(cloudy.jpg)';
+            } else {
+                backgroundImage = 'url(default.jpg)';
+            }
+
+            document.body.style.backgroundImage = backgroundImage;
+        }
+    });
+    </script>
+</body>
+</html>
